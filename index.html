@@ -1,1 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Container Growing System — Blue Devil Ventures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:       #3D5A80;   /* flame / primary */
+    --navy-deep:  #2C4360;
+    --sky:        #7FA6D9;   /* "VENTURES" light blue */
+    --ink:        #2E3440;   /* "BLUE DEVIL" dark slate */
+    --ink-soft:   #6B7484;
+    --paper:      #FAFBFC;
+    --line:       #E2E7EE;
+    --ghost:      #EDF1F6;
+    --ok:         #3E8E5A;
+    --err:        #B4453B;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --sans: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  }
 
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Ghost flame watermark, echoing the title slide */
+  .ghost-flame {
+    position: fixed;
+    right: -8vw; bottom: -12vh;
+    width: 55vmin;
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Header / logotype ─────────────────────────────────────────── */
+  header { display: flex; align-items: center; gap: 16px; }
+  header svg { width: 58px; height: auto; flex-shrink: 0; }
+  .logotype { font-family: var(--mono); line-height: 1.05; letter-spacing: 0.16em; }
+  .logotype .top    { font-weight: 600; font-size: 21px; color: var(--ink); }
+  .logotype .bottom { font-weight: 800; font-size: 21px; color: var(--sky); }
+
+  /* ── Title block ───────────────────────────────────────────────── */
+  .title { margin: 64px 0 40px; }
+  .title h1 { font-size: clamp(30px, 5.5vw, 46px); font-weight: 600; letter-spacing: -0.02em; }
+  .title p  { margin-top: 8px; font-size: clamp(16px, 2.6vw, 21px); color: var(--ink-soft); font-weight: 400; }
+
+  /* ── Connection bar ────────────────────────────────────────────── */
+  .connect {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+  }
+  .connect label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--ink-soft); }
+  .connect input {
+    font-family: var(--mono); font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 6px;
+    width: 200px; color: var(--ink); background: var(--paper);
+  }
+  .connect input:focus { outline: 2px solid var(--sky); outline-offset: 1px; border-color: var(--sky); }
+  .status {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    display: inline-flex; align-items: center; gap: 7px;
+    color: var(--ink-soft);
+  }
+  .status .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink-soft); }
+  .status.ok   { color: var(--ok); }  .status.ok .dot  { background: var(--ok); }
+  .status.err  { color: var(--err); } .status.err .dot { background: var(--err); }
+
+  /* ── The two calls ─────────────────────────────────────────────── */
+  .calls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 620px) { .calls { grid-template-columns: 1fr; } }
+
+  .call {
+    text-align: left;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    padding: 18px 18px 16px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: border-color .15s, transform .05s;
+  }
+  .call:hover { border-color: var(--navy); }
+  .call:active { transform: translateY(1px); }
+  .call:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+  .call .endpoint {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    color: var(--sky); font-weight: 600;
+  }
+  .call h2 { font-size: 17px; font-weight: 600; margin: 6px 0 4px; color: var(--ink); }
+  .call p  { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; }
+
+  /* ── Readout ───────────────────────────────────────────────────── */
+  .readout { margin-top: 28px; }
+  .readout-head {
+    display: flex; align-items: baseline; gap: 12px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
+    color: var(--ink-soft); margin-bottom: 10px;
+  }
+  .readout-head .meta { margin-left: auto; letter-spacing: 0.04em; }
+  pre {
+    font-family: var(--mono); font-size: 13px; line-height: 1.55;
+    background: var(--navy-deep); color: #DDE6F2;
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow: auto;
+    max-height: 420px;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  pre .k { color: var(--sky); }
+  pre .n { color: #F0C674; }
+  pre .s { color: #B5D6A7; }
+  pre.err { background: #4A2E2B; color: #F2CBc7; }
+
+  footer {
+    margin-top: 56px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    color: var(--ink-soft);
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- Ghost watermark flame -->
+<svg class="ghost-flame" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="#EDF1F6" d="M55 2C58 25 88 38 88 78c0 28-17 48-38 48S12 106 12 78C12 55 26 45 30 30c6 12 4 20 1 27 8-4 12-14 11-26 10 8 9 21 6 30 12-6 14-25 7-59z"/>
+  <path fill="#FAFBFC" d="M50 62 32 88h11v34h14V88h11z"/>
+</svg>
+
+<div class="wrap">
+
+  <header>
+    <!-- Blue Devil Ventures flame (SVG recreation — no image asset needed) -->
+    <svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Blue Devil Ventures">
+      <path fill="#3D5A80" d="M55 2C58 25 88 38 88 78c0 28-17 48-38 48S12 106 12 78C12 55 26 45 30 30c6 12 4 20 1 27 8-4 12-14 11-26 10 8 9 21 6 30 12-6 14-25 7-59z"/>
+      <path fill="#FAFBFC" d="M50 62 32 88h11v34h14V88h11z"/>
+    </svg>
+    <div class="logotype">
+      <div class="top">BLUE&nbsp;DEVIL</div>
+      <div class="bottom">VENTURES</div>
+    </div>
+  </header>
+
+  <div class="title">
+    <h1>Container growing system</h1>
+    <p>Automated irrigation and parameter sensing</p>
+  </div>
+
+  <div class="connect">
+    <label for="ip">DEVICE&nbsp;IP</label>
+    <input id="ip" placeholder="192.168.x.x" spellcheck="false"
+           onkeydown="if(event.key==='Enter') callApi('/api/current','Current data')">
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">NOT CONNECTED</span></div>
+  </div>
+
+  <div class="calls">
+    <button class="call" onclick="callApi('/api/current','Current data')">
+      <span class="endpoint">GET /api/current</span>
+      <h2>Call for current data</h2>
+      <p>Latest readings held in the Pico's memory — environment sensors and all six soil moisture probes.</p>
+    </button>
+    <button class="call" onclick="callApi('/api/history','SD card history')">
+      <span class="endpoint">GET /api/history</span>
+      <h2>Call for all SD card data</h2>
+      <p>Every row logged to the SD card, streamed from the greenhouse as JSON. Large logs may take a moment.</p>
+    </button>
+  </div>
+
+  <div class="readout">
+    <div class="readout-head">
+      <span id="readoutLabel">READOUT</span>
+      <span class="meta" id="readoutMeta">waiting for first call</span>
+    </div>
+    <pre id="out">Enter the Pico's IP address, then call an endpoint.</pre>
+  </div>
+
+  <footer>CROP&nbsp;MIND&nbsp;·&nbsp;PICO&nbsp;2&nbsp;W&nbsp;FIELD&nbsp;UNIT</footer>
+</div>
+
+<script>
+const out    = document.getElementById("out");
+const status = document.getElementById("status");
+const stText = document.getElementById("statusText");
+const rLabel = document.getElementById("readoutLabel");
+const rMeta  = document.getElementById("readoutMeta");
+
+function setStatus(cls, text) {
+  status.className = "status" + (cls ? " " + cls : "");
+  stText.textContent = text;
+}
+
+// Minimal JSON syntax highlighting for the readout.
+function highlight(json) {
+  return json
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/"([^"]+)":/g, '"<span class="k">$1</span>":')
+    .replace(/: "([^"]*)"/g, ': "<span class="s">$1</span>"')
+    .replace(/: (-?\d+\.?\d*)/g, ': <span class="n">$1</span>');
+}
+
+async function callApi(path, label) {
+  const ip = document.getElementById("ip").value.trim();
+  if (!ip) { setStatus("err", "ENTER AN IP"); return; }
+
+  rLabel.textContent = label.toUpperCase();
+  rMeta.textContent  = "requesting…";
+  out.className = "";
+  out.textContent = "…";
+  setStatus("", "REQUESTING");
+  const t0 = performance.now();
+
+  try {
+    const resp = await fetch("http://" + ip + path);
+    const data = await resp.json();
+    const ms   = Math.round(performance.now() - t0);
+    const rows = Array.isArray(data) ? data.length + " rows · " : "";
+    out.innerHTML = highlight(JSON.stringify(data, null, 2));
+    rMeta.textContent = rows + ms + " ms · " + new Date().toLocaleTimeString();
+    setStatus("ok", "CONNECTED · " + ip);
+  } catch (e) {
+    out.className = "err";
+    out.textContent =
+      "Request failed: " + e.message + "\n\n" +
+      "Checklist:\n" +
+      "  - Pico and this device on the SAME network (hotspot)?\n" +
+      "  - IP correct? (printed in Thonny at boot)\n" +
+      "  - Opened over HTTPS? Browsers block HTTPS pages from\n" +
+      "    calling an HTTP device — open this file locally instead.";
+    rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
+    setStatus("err", "NO RESPONSE");
+  }
+}
+</script>
+</body>
+</html>
