@@ -50,19 +50,19 @@
     padding: 40px 24px 80px;
   }
 
-  /* ── Header / logotype ─────────────────────────────────────────── */
+  /* ── Header / logotype ──────────────────────────────────────────── */
   header { display: flex; align-items: center; gap: 16px; }
   header svg { width: 58px; height: auto; flex-shrink: 0; }
   .logotype { font-family: var(--mono); line-height: 1.05; letter-spacing: 0.16em; }
   .logotype .top    { font-weight: 600; font-size: 21px; color: var(--ink); }
   .logotype .bottom { font-weight: 800; font-size: 21px; color: var(--sky); }
 
-  /* ── Title block ───────────────────────────────────────────────── */
+  /* ── Title block ────────────────────────────────────────────────── */
   .title { margin: 64px 0 40px; }
   .title h1 { font-size: clamp(30px, 5.5vw, 46px); font-weight: 600; letter-spacing: -0.02em; }
   .title p  { margin-top: 8px; font-size: clamp(16px, 2.6vw, 21px); color: var(--ink-soft); font-weight: 400; }
 
-  /* ── Connection bar ────────────────────────────────────────────── */
+  /* ── Connection bar ─────────────────────────────────────────────── */
   .connect {
     display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
     padding: 14px 16px;
@@ -78,6 +78,15 @@
     width: 200px; color: var(--ink); background: var(--paper);
   }
   .connect input:focus { outline: 2px solid var(--sky); outline-offset: 1px; border-color: var(--sky); }
+  .connect input.narrow { width: 130px; }
+  .connect button.btn {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    padding: 8px 12px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--ghost);
+    color: var(--navy-deep); cursor: pointer;
+  }
+  .connect button.btn:hover { border-color: var(--navy); }
+  .connect button.btn:disabled { opacity: 0.5; cursor: default; }
   .status {
     margin-left: auto;
     font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
@@ -88,8 +97,9 @@
   .status.ok   { color: var(--ok); }  .status.ok .dot  { background: var(--ok); }
   .status.err  { color: var(--err); } .status.err .dot { background: var(--err); }
 
-  /* ── The two calls ─────────────────────────────────────────────── */
-  .calls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  /* ── The three calls ───────────────────────────────────────────── */
+  .calls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 860px) { .calls { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 620px) { .calls { grid-template-columns: 1fr; } }
 
   .call {
@@ -111,8 +121,18 @@
   }
   .call h2 { font-size: 17px; font-weight: 600; margin: 6px 0 4px; color: var(--ink); }
   .call p  { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; }
+  .call .badge {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--navy-deep);
+    background: var(--ghost);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 3px 7px;
+  }
 
-  /* ── Readout ───────────────────────────────────────────────────── */
+  /* ── Readout ────────────────────────────────────────────────────── */
   .readout { margin-top: 28px; }
   .readout-head {
     display: flex; align-items: baseline; gap: 12px;
@@ -174,6 +194,10 @@
     <label for="ip">DEVICE&nbsp;IP</label>
     <input id="ip" placeholder="192.168.x.x" spellcheck="false"
            onkeydown="if(event.key==='Enter') callApi('/api/current','Current data')">
+    <button class="btn" id="findBtn" onclick="findPico()">FIND PICO</button>
+    <input id="subnet" class="narrow" placeholder="custom: 192.168.50" spellcheck="false"
+           onkeydown="if(event.key==='Enter') scanCustomSubnet()">
+    <button class="btn" id="scanBtn" onclick="scanCustomSubnet()">SCAN SUBNET</button>
     <div class="status" id="status"><span class="dot"></span><span id="statusText">NOT CONNECTED</span></div>
   </div>
 
@@ -188,6 +212,12 @@
       <h2>Call for all SD card data</h2>
       <p>Every row logged to the SD card, streamed from the greenhouse as JSON. Large logs may take a moment.</p>
     </button>
+    <button class="call" onclick="callLatest()">
+      <span class="endpoint">GET LATEST (from GitHub)</span>
+      <h2>View last pushed reading</h2>
+      <p>Read straight from this site — works from anywhere, no IP or shared WiFi needed. The Pico pushes a reading here periodically, so this can lag the live device by a few minutes.</p>
+      <span class="badge">MAY BE A FEW MIN STALE</span>
+    </button>
   </div>
 
   <div class="readout">
@@ -195,18 +225,31 @@
       <span id="readoutLabel">READOUT</span>
       <span class="meta" id="readoutMeta">waiting for first call</span>
     </div>
-    <pre id="out">Enter the Pico's IP address, then call an endpoint.</pre>
+    <pre id="out">Enter the Pico's IP, or click FIND PICO to search your network automatically.</pre>
   </div>
 
   <footer>CROP&nbsp;MIND&nbsp;·&nbsp;PICO&nbsp;2&nbsp;W&nbsp;FIELD&nbsp;UNIT</footer>
 </div>
 
 <script>
-const out    = document.getElementById("out");
-const status = document.getElementById("status");
-const stText = document.getElementById("statusText");
-const rLabel = document.getElementById("readoutLabel");
-const rMeta  = document.getElementById("readoutMeta");
+const out     = document.getElementById("out");
+const status  = document.getElementById("status");
+const stText  = document.getElementById("statusText");
+const rLabel  = document.getElementById("readoutLabel");
+const rMeta   = document.getElementById("readoutMeta");
+const ipInput = document.getElementById("ip");
+const findBtn = document.getElementById("findBtn");
+const scanBtn = document.getElementById("scanBtn");
+
+const LAST_IP_KEY = "cropmind_lastIp";
+// Most common home-router ranges, checked first; 192.168.4 is the Pico's
+// own default AP-mode subnet if it ever falls back to hosting its own WiFi.
+const COMMON_PREFIXES = ["192.168.1", "192.168.0", "192.168.2", "192.168.4"];
+
+window.addEventListener("DOMContentLoaded", () => {
+  const last = localStorage.getItem(LAST_IP_KEY);
+  if (last) ipInput.value = last;
+});
 
 function setStatus(cls, text) {
   status.className = "status" + (cls ? " " + cls : "");
@@ -223,8 +266,8 @@ function highlight(json) {
 }
 
 async function callApi(path, label) {
-  const ip = document.getElementById("ip").value.trim();
-  if (!ip) { setStatus("err", "ENTER AN IP"); return; }
+  const ip = ipInput.value.trim();
+  if (!ip) { setStatus("err", "ENTER AN IP OR CLICK FIND PICO"); return; }
 
   rLabel.textContent = label.toUpperCase();
   rMeta.textContent  = "requesting…";
@@ -241,18 +284,147 @@ async function callApi(path, label) {
     out.innerHTML = highlight(JSON.stringify(data, null, 2));
     rMeta.textContent = rows + ms + " ms · " + new Date().toLocaleTimeString();
     setStatus("ok", "CONNECTED · " + ip);
+    localStorage.setItem(LAST_IP_KEY, ip);
   } catch (e) {
     out.className = "err";
     out.textContent =
       "Request failed: " + e.message + "\n\n" +
       "Checklist:\n" +
       "  - Pico and this device on the SAME network (hotspot)?\n" +
-      "  - IP correct? (printed in Thonny at boot)\n" +
+      "  - IP correct? Click FIND PICO to search automatically, or\n" +
+      "    read it from Thonny at boot (\"WiFi connected: ...\").\n" +
       "  - Opened over HTTPS? Browsers block HTTPS pages from\n" +
       "    calling an HTTP device — open this file locally instead.";
     rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
     setStatus("err", "NO RESPONSE");
   }
+}
+
+//  Reads the copy of the latest reading pushed into this repo by the Pico
+// (via the GitHub Contents API, in the separate firmware project). Unlike
+// the two calls above, this is a same-origin fetch of a static file served
+// by GitHub Pages — no device IP, no LAN, no CORS handling needed. It can
+// lag the live device by however long GitHub Pages' CDN takes to refresh,
+// so the cache-busting query param only bypasses the browser's own cache.
+async function callLatest() {
+  rLabel.textContent = "LATEST (GITHUB)";
+  rMeta.textContent  = "requesting…";
+  out.className = "";
+  out.textContent = "…";
+  setStatus("", "REQUESTING");
+  const t0 = performance.now();
+
+  try {
+    const resp = await fetch("data/latest.json?t=" + Date.now());
+    const data = await resp.json();
+    const ms   = Math.round(performance.now() - t0);
+    out.innerHTML = highlight(JSON.stringify(data, null, 2));
+    rMeta.textContent = ms + " ms · " + new Date().toLocaleTimeString() + " · may be a few minutes stale";
+    setStatus("ok", "GITHUB PAGES · CACHED COPY");
+  } catch (e) {
+    out.className = "err";
+    out.textContent =
+      "Request failed: " + e.message + "\n\n" +
+      "data/latest.json couldn't be read. If you're viewing this file\n" +
+      "locally (file://) rather than via GitHub Pages, the browser may\n" +
+      "be blocking the fetch — try the hosted site instead.";
+    rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
+    setStatus("err", "NO RESPONSE");
+  }
+}
+
+// ── Network discovery ──────────────────────────────────────────────
+// Probes one address's /api/current with a short timeout. Only treats it
+// as "found" if the JSON actually looks like a Crop Mind reading, so a
+// router/printer/smart-plug admin page on the same LAN can't false-match.
+async function probe(ip, signal) {
+  try {
+    const resp = await fetch("http://" + ip + "/api/current", { signal });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (data && typeof data === "object" &&
+        ("sensors" in data || "moisture" in data || "status" in data)) {
+      return { ip, data };
+    }
+  } catch (e) { /* not our device, or nothing there — expected for most IPs */ }
+  return null;
+}
+
+async function scanPrefixes(prefixes, onProgress) {
+  const targets = [];
+  for (const p of prefixes) {
+    for (let i = 1; i <= 254; i++) targets.push(p + "." + i);
+  }
+  const CONCURRENCY = 40;
+  const TIMEOUT_MS  = 450;
+  let index = 0, scanned = 0, found = null;
+
+  async function worker() {
+    while (index < targets.length && !found) {
+      const ip = targets[index++];
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const result = await probe(ip, controller.signal);
+      clearTimeout(timer);
+      scanned++;
+      if (onProgress) onProgress(scanned, targets.length);
+      if (result) found = result;
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  return found;
+}
+
+async function runScan(prefixes, rangeLabel) {
+  findBtn.disabled = true;
+  scanBtn.disabled = true;
+  rLabel.textContent = "FIND PICO";
+  out.className = "";
+  out.textContent = "Scanning " + rangeLabel + " for a Crop Mind device…";
+  setStatus("", "SCANNING NETWORK…");
+
+  const found = await scanPrefixes(prefixes, (done, total) => {
+    rMeta.textContent = done + " / " + total + " addresses checked";
+  });
+
+  if (found) {
+    ipInput.value = found.ip;
+    localStorage.setItem(LAST_IP_KEY, found.ip);
+    out.innerHTML = highlight(JSON.stringify(found.data, null, 2));
+    rLabel.textContent = "CURRENT DATA";
+    rMeta.textContent = "found at " + found.ip + " · " + new Date().toLocaleTimeString();
+    setStatus("ok", "CONNECTED · " + found.ip);
+  } else {
+    out.className = "err";
+    out.textContent =
+      "No Pico found on " + rangeLabel + ".\n\n" +
+      "Try:\n" +
+      "  - Make sure this device and the Pico are on the SAME WiFi network.\n" +
+      "  - If your router uses an unusual range, type it under \"custom\"\n" +
+      "    (e.g. 192.168.50) and click SCAN SUBNET.\n" +
+      "  - Or read the IP directly: open Thonny, connect to the Pico, and\n" +
+      "    look for the line \"WiFi connected: ...\" printed at boot.";
+    rMeta.textContent = "not found · " + new Date().toLocaleTimeString();
+    setStatus("err", "NOT FOUND");
+  }
+
+  findBtn.disabled = false;
+  scanBtn.disabled = false;
+}
+
+function findPico() {
+  runScan(COMMON_PREFIXES, "the common home network ranges");
+}
+
+function scanCustomSubnet() {
+  const raw = document.getElementById("subnet").value.trim();
+  const prefix = raw.replace(/\.$/, "");
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(prefix)) {
+    setStatus("err", "ENTER SUBNET LIKE 192.168.50");
+    return;
+  }
+  runScan([prefix], prefix + ".1–" + prefix + ".254");
 }
 </script>
 </body>
