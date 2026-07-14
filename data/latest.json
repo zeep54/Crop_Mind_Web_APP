@@ -1,1 +1,1 @@
-{"test": "hello from the Pico"}
+{"sensors": {"bme_gas_kohm": 7.365598, "aht_hum": 36.81917, "lux": 71.8847936, "aht_temp": 24.685478, "bme_temp": 25.099138, "bme_hum": 29.064074, "bme_press": 996.1909}, "sensor_time": "2026-07-13 20:33:34"}
