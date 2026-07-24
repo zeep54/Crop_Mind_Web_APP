@@ -96,15 +96,16 @@
   .connect label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--ink-soft); }
   .connect input {
     font-family: var(--mono); font-size: 14px;
-    padding: 8px 10px;
+    padding: 10px;
     border: 1px solid var(--line); border-radius: 6px;
-    width: 200px; color: var(--ink); background: var(--paper);
+    flex: 1 1 160px; min-width: 0; max-width: 220px;
+    color: var(--ink); background: var(--paper);
   }
   .connect input:focus { outline: 2px solid var(--sky); outline-offset: 1px; border-color: var(--sky); }
-  .connect input.narrow { width: 130px; }
+  .connect input.narrow { flex-basis: 130px; }
   .connect button.btn {
     font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
-    padding: 8px 12px; border-radius: 6px;
+    padding: 10px 14px; border-radius: 6px;
     border: 1px solid var(--line); background: var(--ghost);
     color: var(--navy-deep); cursor: pointer;
   }
@@ -248,6 +249,27 @@
     color: var(--ink-soft);
   }
 
+  /* ── Mobile ─────────────────────────────────────────────────────── */
+  @media (max-width: 480px) {
+    .wrap { padding: 28px 16px 56px; }
+    .title { margin: 40px 0 28px; }
+
+    .connect { flex-direction: column; align-items: stretch; }
+    .connect input, .connect input.narrow { max-width: none; flex-basis: auto; font-size: 16px; }
+    .connect button.btn { width: 100%; }
+    .status { margin-left: 0; }
+
+    .call { padding: 16px; }
+    .controls { padding: 16px; }
+
+    pre { padding: 14px 16px; font-size: 12.5px; }
+  }
+
+  /* Buttons keep a comfortable tap target on touch devices. */
+  @media (pointer: coarse) {
+    .connect button.btn, .call, .control-btn { min-height: 44px; }
+  }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -281,6 +303,14 @@
   <div class="hero-card" aria-label="Tomato plants in a greenhouse">
     <img src="img/tomato_plants_JPEG.jpg" alt="Tomato plants growing in a greenhouse">
     <div class="hero-caption">TOMATO PLANTS · GREENHOUSE REFERENCE</div>
+  </div>
+
+  <div class="readout">
+    <div class="readout-head">
+      <span id="readoutLabel">READOUT</span>
+      <span class="meta" id="readoutMeta">waiting for first call</span>
+    </div>
+    <pre id="out">Enter the Pico's IP address and press Enter or click CONNECT. The default is 192.168.4.31.</pre>
   </div>
 
   <div class="connect">
@@ -335,14 +365,6 @@
     </div>
 
     <div class="control-note" id="controlNote"></div>
-  </div>
-
-  <div class="readout">
-    <div class="readout-head">
-      <span id="readoutLabel">READOUT</span>
-      <span class="meta" id="readoutMeta">waiting for first call</span>
-    </div>
-    <pre id="out">Enter the Pico's IP address and press Enter or click CONNECT. The default is 192.168.4.31.</pre>
   </div>
 
   <footer>CROP&nbsp;MIND&nbsp;·&nbsp;PICO&nbsp;2&nbsp;W&nbsp;FIELD&nbsp;UNIT</footer>
