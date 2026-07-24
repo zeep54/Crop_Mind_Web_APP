@@ -181,8 +181,9 @@
   }
   .instructions li b { color: var(--navy-deep); }
 
-  .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 560px) { .control-grid { grid-template-columns: 1fr; } }
+  .control-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) { .control-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 420px) { .control-grid { grid-template-columns: 1fr; } }
 
   .control-btn {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -346,8 +347,8 @@
     <div class="instructions">
       <ol>
         <li>Turn the <b>pump</b> on first.</li>
-        <li>Then open the <b>valves</b>.</li>
-        <li>Close the valves before switching the pump off — the <b>pump must be turned off last</b>.</li>
+        <li>Then open <b>valve 1</b> and/or <b>valve 2</b>.</li>
+        <li>Close both valves before switching the pump off — the <b>pump must be turned off last</b>.</li>
       </ol>
     </div>
 
@@ -357,10 +358,15 @@
         <span class="control-state" id="pumpState">OFF</span>
         <span class="control-hint">tap to turn on</span>
       </button>
-      <button class="control-btn" id="valveBtn" onclick="toggleValves()" disabled>
-        <span class="control-label">VALVES</span>
-        <span class="control-state" id="valveState">OFF</span>
-        <span class="control-hint" id="valveHint">turn pump on first</span>
+      <button class="control-btn" id="valve1Btn" onclick="toggleValve1()" disabled>
+        <span class="control-label">VALVE 1</span>
+        <span class="control-state" id="valve1State">OFF</span>
+        <span class="control-hint" id="valve1Hint">turn pump on first</span>
+      </button>
+      <button class="control-btn" id="valve2Btn" onclick="toggleValve2()" disabled>
+        <span class="control-label">VALVE 2</span>
+        <span class="control-state" id="valve2State">OFF</span>
+        <span class="control-hint" id="valve2Hint">turn pump on first</span>
       </button>
     </div>
 
@@ -477,71 +483,96 @@ async function callLatest() {
 }
 
 // ── Pump & valve controls ─────────────────────────────────────────────
-// Buttons toggle immediately (the intended state) and fire a best-effort
-// command at the Pico. The actual /api/pump and /api/valves endpoints
-// don't exist in the firmware yet, so a note appears if the device
-// doesn't confirm the command.
-const pumpBtn     = document.getElementById("pumpBtn");
-const pumpState   = document.getElementById("pumpState");
-const pumpHint    = pumpBtn.querySelector(".control-hint");
-const valveBtn    = document.getElementById("valveBtn");
-const valveState  = document.getElementById("valveState");
-const valveHint   = document.getElementById("valveHint");
+// Each button is a local on/off toggle (green = off, red = on) that also
+// sends a single command character to the Pico on every click: 'A' for
+// the pump, 'B' for valve 1, 'C' for valve 2. The Pico is expected to
+// toggle the matching relay itself each time it receives that character,
+// so the same char is sent whether the button is switching on or off.
 const controlNote = document.getElementById("controlNote");
 
-let pumpOn = false;
-let valvesOn = false;
+const PUMP_CHAR   = "A";
+const VALVE1_CHAR = "B";
+const VALVE2_CHAR = "C";
 
 function setControlNote(text, warn) {
   controlNote.textContent = text || "";
   controlNote.classList.toggle("warn", !!warn);
 }
 
-function togglePump() {
-  if (pumpOn && valvesOn) {
-    setControlNote("Close the valves before turning the pump off — the pump must be turned off last.", true);
-    return;
+function makeToggle({ btnId, stateId, hintId, char, onHint, offHint, guard }) {
+  const btn = document.getElementById(btnId);
+  const state = document.getElementById(stateId);
+  const hint = document.getElementById(hintId) || btn.querySelector(".control-hint");
+  let on = false;
+
+  function render() {
+    btn.classList.toggle("on", on);
+    state.textContent = on ? "ON" : "OFF";
+    hint.textContent = on ? onHint : offHint;
   }
-  pumpOn = !pumpOn;
-  pumpBtn.classList.toggle("on", pumpOn);
-  pumpState.textContent = pumpOn ? "ON" : "OFF";
-  pumpHint.textContent = pumpOn ? "tap to turn off" : "tap to turn on";
 
-  valveBtn.disabled = !pumpOn;
-  valveHint.textContent = pumpOn ? "tap to open" : "turn pump on first";
+  function toggle() {
+    if (guard && !guard()) return;
+    on = !on;
+    render();
+    setControlNote("");
+    sendDeviceCommand(char);
+  }
 
-  setControlNote("");
-  sendDeviceCommand("pump", pumpOn);
+  return { toggle, isOn: () => on, setEnabled: en => { btn.disabled = !en; }, render };
 }
 
-function toggleValves() {
-  if (!pumpOn) {
-    setControlNote("Turn the pump on first.", true);
-    return;
+const pump = makeToggle({
+  btnId: "pumpBtn", stateId: "pumpState", hintId: null, char: PUMP_CHAR,
+  onHint: "tap to turn off", offHint: "tap to turn on",
+  guard: () => {
+    if (pump.isOn() && (valve1.isOn() || valve2.isOn())) {
+      setControlNote("Close both valves before turning the pump off — the pump must be turned off last.", true);
+      return false;
+    }
+    return true;
   }
-  valvesOn = !valvesOn;
-  valveBtn.classList.toggle("on", valvesOn);
-  valveState.textContent = valvesOn ? "ON" : "OFF";
-  valveHint.textContent = valvesOn ? "tap to close" : "tap to open";
+});
 
-  setControlNote("");
-  sendDeviceCommand("valves", valvesOn);
-}
+const valve1 = makeToggle({
+  btnId: "valve1Btn", stateId: "valve1State", hintId: "valve1Hint", char: VALVE1_CHAR,
+  onHint: "tap to close", offHint: "tap to open",
+  guard: () => {
+    if (!pump.isOn()) { setControlNote("Turn the pump on first.", true); return false; }
+    return true;
+  }
+});
 
-async function sendDeviceCommand(kind, on) {
+const valve2 = makeToggle({
+  btnId: "valve2Btn", stateId: "valve2State", hintId: "valve2Hint", char: VALVE2_CHAR,
+  onHint: "tap to close", offHint: "tap to open",
+  guard: () => {
+    if (!pump.isOn()) { setControlNote("Turn the pump on first.", true); return false; }
+    return true;
+  }
+});
+
+function togglePump()  { pump.toggle();   valve1.setEnabled(pump.isOn()); valve2.setEnabled(pump.isOn()); }
+function toggleValve1() { valve1.toggle(); }
+function toggleValve2() { valve2.toggle(); }
+
+// Sends the single command character to the Pico as a query param on a
+// plain GET request (no custom headers), so the browser does not need to
+// do a CORS preflight (OPTIONS) — simple embedded HTTP servers often only
+// handle GET.
+async function sendDeviceCommand(char) {
   const ip = (ipInput.value.trim() || DEFAULT_IP).trim();
-  const path = "/api/" + kind + "/" + (on ? "on" : "off");
+  const path = "/cmd?c=" + char;
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4000);
-    const resp = await fetch("http://" + ip + path, { method: "POST", signal: controller.signal });
+    const resp = await fetch("http://" + ip + path, { signal: controller.signal });
     clearTimeout(timeout);
     if (!resp.ok) throw new Error("HTTP " + resp.status);
   } catch (e) {
     setControlNote("Not confirmed by device (" + path + "): " + e.message + " — endpoint may not be wired up yet.", true);
   }
 }
-
 </script>
 </body>
 </html>
