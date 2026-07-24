@@ -155,48 +155,70 @@
     padding: 3px 7px;
   }
 
-  /* ── Charts ─────────────────────────────────────────────────────── */
-  .charts { margin-top: 28px; display: none; }
-  .charts.show { display: block; }
-  .charts-head {
+  /* ── Controls ───────────────────────────────────────────────────── */
+  .controls {
+    margin-top: 28px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    padding: 18px 20px 20px;
+  }
+  .controls-head {
     font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
     color: var(--ink-soft); margin-bottom: 12px;
   }
-  .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-  .chart-card { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 14px 16px 12px; }
-  .chart-card.wide { grid-column: 1 / -1; }
-  .chart-card h3 {
-    font-family: var(--sans); font-size: 13px; font-weight: 600;
-    color: var(--ink); margin-bottom: 8px;
+  .instructions {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--ghost);
   }
-  .chart-legend {
-    display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px;
-    font-family: var(--mono); font-size: 11px; color: var(--ink-soft);
+  .instructions ol { margin: 0; padding-left: 18px; }
+  .instructions li {
+    font-size: 13.5px; color: var(--ink); line-height: 1.7;
   }
-  .chart-legend .item { display: inline-flex; align-items: center; gap: 6px; }
-  .chart-legend .swatch { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
-  .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .chart-svg .grid { stroke: var(--line); stroke-width: 1; }
-  .chart-svg .axis-label { font-family: var(--mono); font-size: 9px; fill: var(--ink-soft); }
-  .chart-svg .axis-title { font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; fill: var(--ink-soft); text-transform: uppercase; }
-  .chart-svg .end-label { font-family: var(--mono); font-size: 10px; fill: var(--ink); font-weight: 600; }
-  .chart-svg .crosshair { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; pointer-events: none; }
-  .chart-hit { fill: transparent; cursor: crosshair; }
-  .chart-tooltip {
-    position: fixed; z-index: 20; pointer-events: none;
-    font-family: var(--mono); font-size: 11px; line-height: 1.6;
-    background: var(--navy-deep); color: #DDE6F2;
-    border-radius: 8px; padding: 8px 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.18);
-    opacity: 0; transform: translate(-9999px,-9999px); max-width: 220px;
+  .instructions li b { color: var(--navy-deep); }
+
+  .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .control-grid { grid-template-columns: 1fr; } }
+
+  .control-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 22px 16px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    background: var(--ok);
+    color: #fff;
+    transition: background-color .15s, transform .05s, opacity .15s;
   }
-  .chart-tooltip .t { color: var(--sky); margin-bottom: 4px; }
-  .chart-tooltip .row { display: flex; align-items: center; gap: 6px; }
-  .chart-tooltip .row .k { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .chart-tooltip .row .v { margin-left: auto; font-weight: 600; }
-  .chart-empty {
-    font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
-    padding: 22px; text-align: center; border: 1px dashed var(--line); border-radius: 10px;
+  .control-btn:active { transform: translateY(1px); }
+  .control-btn:focus-visible { outline: 2px solid var(--navy-deep); outline-offset: 2px; }
+  .control-btn.on { background: var(--err); }
+  .control-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .control-label {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
   }
+  .control-state {
+    font-family: var(--mono); font-size: 20px; font-weight: 800; letter-spacing: 0.05em;
+  }
+  .control-hint {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em;
+    opacity: 0.85;
+  }
+
+  .control-note {
+    margin-top: 12px;
+    min-height: 16px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.03em;
+    color: var(--ink-soft);
+  }
+  .control-note.warn { color: var(--err); }
 
   /* ── Readout ────────────────────────────────────────────────────── */
   .readout { margin-top: 28px; }
@@ -288,9 +310,31 @@
     </button>
   </div>
 
-  <div class="charts" id="charts">
-    <div class="charts-head">GRAPH · SD CARD HISTORY</div>
-    <div class="chart-grid" id="chartGrid"></div>
+  <div class="controls">
+    <div class="controls-head">IRRIGATION CONTROL</div>
+
+    <div class="instructions">
+      <ol>
+        <li>Turn the <b>pump</b> on first.</li>
+        <li>Then open the <b>valves</b>.</li>
+        <li>Close the valves before switching the pump off — the <b>pump must be turned off last</b>.</li>
+      </ol>
+    </div>
+
+    <div class="control-grid">
+      <button class="control-btn" id="pumpBtn" onclick="togglePump()">
+        <span class="control-label">PUMP</span>
+        <span class="control-state" id="pumpState">OFF</span>
+        <span class="control-hint">tap to turn on</span>
+      </button>
+      <button class="control-btn" id="valveBtn" onclick="toggleValves()" disabled>
+        <span class="control-label">VALVES</span>
+        <span class="control-state" id="valveState">OFF</span>
+        <span class="control-hint" id="valveHint">turn pump on first</span>
+      </button>
+    </div>
+
+    <div class="control-note" id="controlNote"></div>
   </div>
 
   <div class="readout">
@@ -303,8 +347,6 @@
 
   <footer>CROP&nbsp;MIND&nbsp;·&nbsp;PICO&nbsp;2&nbsp;W&nbsp;FIELD&nbsp;UNIT</footer>
 </div>
-
-<div class="chart-tooltip" id="chartTooltip"></div>
 
 <script>
 const out     = document.getElementById("out");
@@ -365,12 +407,6 @@ async function callApi(path, label) {
     rMeta.textContent = rows + ms + " ms · " + new Date().toLocaleTimeString();
     setStatus("ok", "CONNECTED · " + ip);
     localStorage.setItem(LAST_IP_KEY, ip);
-
-    if (path === "/api/history" && Array.isArray(data) && data.length) {
-      renderHistoryCharts(data);
-    } else {
-      hideCharts();
-    }
   } catch (e) {
     out.className = "err";
     out.textContent =
@@ -382,7 +418,6 @@ async function callApi(path, label) {
       "  - If the Pico is just starting up, wait a few seconds and try again.";
     rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
     setStatus("err", "NO RESPONSE");
-    hideCharts();
   }
 }
 
@@ -407,7 +442,6 @@ async function callLatest() {
     out.innerHTML = highlight(JSON.stringify(data, null, 2));
     rMeta.textContent = ms + " ms · " + new Date().toLocaleTimeString() + " · may be a few minutes stale";
     setStatus("ok", "GITHUB PAGES · CACHED COPY");
-    hideCharts();
   } catch (e) {
     out.className = "err";
     out.textContent =
@@ -420,269 +454,72 @@ async function callLatest() {
   }
 }
 
-// ── Charts ──────────────────────────────────────────────────────────────
-// Renders the SD-card history (an array of readings, same shape as
-// data/latest.json) as a set of small-multiple line charts: one card per
-// environment metric plus a combined moisture-probe card. Pure inline SVG —
-// no chart library — so this stays a zero-dependency static page.
+// ── Pump & valve controls ─────────────────────────────────────────────
+// Buttons toggle immediately (the intended state) and fire a best-effort
+// command at the Pico. The actual /api/pump and /api/valves endpoints
+// don't exist in the firmware yet, so a note appears if the device
+// doesn't confirm the command.
+const pumpBtn     = document.getElementById("pumpBtn");
+const pumpState   = document.getElementById("pumpState");
+const pumpHint    = pumpBtn.querySelector(".control-hint");
+const valveBtn    = document.getElementById("valveBtn");
+const valveState  = document.getElementById("valveState");
+const valveHint   = document.getElementById("valveHint");
+const controlNote = document.getElementById("controlNote");
 
-const CAT_COLORS = ["#2a78d6", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"];
+let pumpOn = false;
+let valvesOn = false;
 
-const chartsEl   = document.getElementById("charts");
-const chartGrid  = document.getElementById("chartGrid");
-const tooltipEl  = document.getElementById("chartTooltip");
-let chartCounter = 0;
-
-function hideCharts() {
-  chartsEl.classList.remove("show");
-  chartGrid.innerHTML = "";
+function setControlNote(text, warn) {
+  controlNote.textContent = text || "";
+  controlNote.classList.toggle("warn", !!warn);
 }
 
-function parseTime(s) {
-  if (!s) return NaN;
-  const t = Date.parse(String(s).replace(" ", "T"));
-  return t;
-}
-
-function fmtTime(ms) {
-  const d = new Date(ms);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) +
-         " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-}
-
-// Each /api/history row is a flat log line: [deviceName, "key=value", ...,
-// timestamp] — e.g. ["Moisture sensor 3", "moisture_pct=3.9", "temp_C=24.6",
-// "2026-07-13 22:37:30"]. This isolates the "Moisture sensor #" rows and
-// reads both their moisture_pct and temp_C fields. Moisture (%) and
-// temperature (°C) get separate charts (different units, never one axis),
-// but each sensor keeps the same color across both charts so its two lines
-// can be matched by eye.
-const MOISTURE_NAME_RE = /^moisture sensor\s+(\d+)$/i;
-
-function renderHistoryCharts(rows) {
-  chartGrid.innerHTML = "";
-  chartCounter = 0;
-
-  const bySensor = new Map(); // sensor id -> [{t, moisture, temp}]
-  for (const row of rows) {
-    if (!Array.isArray(row) || row.length < 3) continue;
-    const nameMatch = String(row[0]).match(MOISTURE_NAME_RE);
-    if (!nameMatch) continue;
-    const id = parseInt(nameMatch[1], 10);
-    const t = parseTime(row[row.length - 1]);
-    if (Number.isNaN(t)) continue;
-
-    let moisture = null, temp = null;
-    for (let i = 1; i < row.length - 1; i++) {
-      const [key, val] = String(row[i]).split("=");
-      if (key === "moisture_pct") moisture = parseFloat(val);
-      if (key === "temp_C") temp = parseFloat(val);
-    }
-    if (!bySensor.has(id)) bySensor.set(id, []);
-    bySensor.get(id).push({ t, moisture, temp });
-  }
-
-  if (!bySensor.size) {
-    const empty = document.createElement("div");
-    empty.className = "chart-empty";
-    empty.textContent = "No \"Moisture sensor #\" rows found in this history payload.";
-    chartGrid.appendChild(empty);
-    chartsEl.classList.add("show");
+function togglePump() {
+  if (pumpOn && valvesOn) {
+    setControlNote("Close the valves before turning the pump off — the pump must be turned off last.", true);
     return;
   }
+  pumpOn = !pumpOn;
+  pumpBtn.classList.toggle("on", pumpOn);
+  pumpState.textContent = pumpOn ? "ON" : "OFF";
+  pumpHint.textContent = pumpOn ? "tap to turn off" : "tap to turn on";
 
-  const ids = [...bySensor.keys()].sort((a, b) => a - b);
-  const times = [...new Set(ids.flatMap(id => bySensor.get(id).map(p => p.t)))].sort((a, b) => a - b);
-  const sensorColor = id => CAT_COLORS[ids.indexOf(id) % CAT_COLORS.length];
+  valveBtn.disabled = !pumpOn;
+  valveHint.textContent = pumpOn ? "tap to open" : "turn pump on first";
 
-  function seriesFor(field) {
-    return ids.map(id => {
-      const byTime = new Map(bySensor.get(id).map(p => [p.t, p[field]]));
-      return {
-        label: "Moisture Sensor " + id,
-        color: sensorColor(id),
-        values: times.map(t => (byTime.has(t) && byTime.get(t) != null && !Number.isNaN(byTime.get(t)) ? byTime.get(t) : null))
-      };
-    });
+  setControlNote("");
+  sendDeviceCommand("pump", pumpOn);
+}
+
+function toggleValves() {
+  if (!pumpOn) {
+    setControlNote("Turn the pump on first.", true);
+    return;
   }
+  valvesOn = !valvesOn;
+  valveBtn.classList.toggle("on", valvesOn);
+  valveState.textContent = valvesOn ? "ON" : "OFF";
+  valveHint.textContent = valvesOn ? "tap to close" : "tap to open";
 
-  chartGrid.appendChild(buildChartCard("Soil moisture — all sensors", "%", { times, series: seriesFor("moisture") }, true));
-  chartGrid.appendChild(buildChartCard("Soil temperature — all sensors", "°C", { times, series: seriesFor("temp") }, true));
-  chartsEl.classList.add("show");
+  setControlNote("");
+  sendDeviceCommand("valves", valvesOn);
 }
 
-function buildChartCard(title, unit, ds, wide) {
-  const card = document.createElement("div");
-  card.className = "chart-card" + (wide ? " wide" : "");
-
-  const h3 = document.createElement("h3");
-  h3.textContent = title + (unit ? " (" + unit + ")" : "");
-  card.appendChild(h3);
-
-  card.appendChild(buildSvgChart(ds, unit));
-
-  if (ds.series.length >= 2) {
-    const legend = document.createElement("div");
-    legend.className = "chart-legend";
-    ds.series.forEach(s => {
-      const item = document.createElement("span");
-      item.className = "item";
-      const sw = document.createElement("span");
-      sw.className = "swatch";
-      sw.style.background = s.color;
-      const lbl = document.createElement("span");
-      lbl.textContent = s.label;
-      item.appendChild(sw);
-      item.appendChild(lbl);
-      legend.appendChild(item);
-    });
-    card.appendChild(legend);
+async function sendDeviceCommand(kind, on) {
+  const ip = (ipInput.value.trim() || DEFAULT_IP).trim();
+  const path = "/api/" + kind + "/" + (on ? "on" : "off");
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const resp = await fetch("http://" + ip + path, { method: "POST", signal: controller.signal });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+  } catch (e) {
+    setControlNote("Not confirmed by device (" + path + "): " + e.message + " — endpoint may not be wired up yet.", true);
   }
-
-  return card;
 }
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-function svgEl(tag, attrs) {
-  const el = document.createElementNS(SVG_NS, tag);
-  for (const k in attrs) el.setAttribute(k, attrs[k]);
-  return el;
-}
-
-function buildSvgChart(ds, unit) {
-  const id = "c" + (chartCounter++);
-  const W = 520, H = 176;
-  const padL = 44, padR = 12, padT = 12, padB = 30;
-
-  const svg = svgEl("svg", { class: "chart-svg", viewBox: "0 0 " + W + " " + H });
-
-  const allVals = ds.series.flatMap(s => s.values.filter(v => v != null));
-  let yMin = Math.min(...allVals), yMax = Math.max(...allVals);
-  if (!isFinite(yMin) || !isFinite(yMax)) { yMin = 0; yMax = 1; }
-  if (yMin === yMax) { yMin -= 1; yMax += 1; }
-  const xMin = ds.times[0], xMax = ds.times[ds.times.length - 1];
-  const xSpan = xMax - xMin || 1;
-
-  const sx = t => padL + ((t - xMin) / xSpan) * (W - padL - padR);
-  const sy = v => H - padB - ((v - yMin) / (yMax - yMin)) * (H - padT - padB);
-
-  // Gridlines + y labels (max / mid / min).
-  [yMax, (yMax + yMin) / 2, yMin].forEach((v, i) => {
-    const y = sy(v);
-    svg.appendChild(svgEl("line", { class: "grid", x1: padL, x2: W - padR, y1: y, y2: y }));
-    const label = svgEl("text", { class: "axis-label", x: 2, y: y + 3 });
-    label.textContent = v.toFixed(1);
-    svg.appendChild(label);
-  });
-
-  // Y-axis title (the unit), rotated along the left edge.
-  const yMid = padT + (H - padT - padB) / 2;
-  const yTitle = svgEl("text", {
-    class: "axis-title", x: 10, y: yMid, "text-anchor": "middle",
-    transform: "rotate(-90 10 " + yMid + ")"
-  });
-  yTitle.textContent = unit || "Value";
-  svg.appendChild(yTitle);
-
-  // X-axis baseline, first/last time ticks, and "Time" title.
-  svg.appendChild(svgEl("line", { class: "grid", x1: padL, x2: W - padR, y1: H - padB, y2: H - padB }));
-  const firstTick = svgEl("text", { class: "axis-label", x: padL, y: H - padB + 12, "text-anchor": "start" });
-  firstTick.textContent = fmtTime(xMin);
-  svg.appendChild(firstTick);
-  const lastTick = svgEl("text", { class: "axis-label", x: W - padR, y: H - padB + 12, "text-anchor": "end" });
-  lastTick.textContent = fmtTime(xMax);
-  svg.appendChild(lastTick);
-  const xTitle = svgEl("text", { class: "axis-title", x: padL + (W - padL - padR) / 2, y: H - 2, "text-anchor": "middle" });
-  xTitle.textContent = "Time";
-  svg.appendChild(xTitle);
-
-  // One shared crosshair line, hidden until hover.
-  const crosshair = svgEl("line", { class: "crosshair", y1: padT, y2: H - padB, x1: padL, x2: padL });
-  svg.appendChild(crosshair);
-
-  const endLabelYs = [];
-  ds.series.forEach(s => {
-    let d = "";
-    let drawing = false;
-    s.values.forEach((v, i) => {
-      if (v == null) { drawing = false; return; }
-      const x = sx(ds.times[i]), y = sy(v);
-      d += (drawing ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1) + " ";
-      drawing = true;
-    });
-    if (d) {
-      svg.appendChild(svgEl("path", { d: d.trim(), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" }));
-    }
-
-    for (let i = s.values.length - 1; i >= 0; i--) {
-      if (s.values[i] == null) continue;
-      const x = sx(ds.times[i]), y = sy(s.values[i]);
-      svg.appendChild(svgEl("circle", { cx: x, cy: y, r: 4, fill: s.color, stroke: "#fff", "stroke-width": 2 }));
-
-      if (ds.series.length <= 4) {
-        let ly = y + 3;
-        while (endLabelYs.some(prev => Math.abs(prev - ly) < 12)) ly += 12;
-        endLabelYs.push(ly);
-        const lbl = svgEl("text", { class: "end-label", x: Math.min(x + 7, W - padR - 4), y: ly, fill: s.color });
-        lbl.setAttribute("text-anchor", x + 7 > W - padR - 30 ? "end" : "start");
-        lbl.textContent = s.values[i].toFixed(1);
-        svg.appendChild(lbl);
-      }
-      break;
-    }
-  });
-
-  // Hover layer: crosshair + shared tooltip, one value row per series.
-  const hit = svgEl("rect", { class: "chart-hit", x: padL, y: padT, width: Math.max(W - padL - padR, 1), height: H - padT - padB });
-  hit.addEventListener("pointermove", evt => {
-    const rect = hit.ownerSVGElement.getBoundingClientRect();
-    const px = (evt.clientX - rect.left) / rect.width * W;
-    const t = xMin + ((px - padL) / (W - padL - padR)) * xSpan;
-
-    let nearest = 0, best = Infinity;
-    ds.times.forEach((tt, i) => {
-      const diff = Math.abs(tt - t);
-      if (diff < best) { best = diff; nearest = i; }
-    });
-
-    const x = sx(ds.times[nearest]);
-    crosshair.setAttribute("x1", x);
-    crosshair.setAttribute("x2", x);
-    crosshair.style.opacity = 1;
-
-    tooltipEl.innerHTML = "";
-    const head = document.createElement("div");
-    head.className = "t";
-    head.textContent = fmtTime(ds.times[nearest]);
-    tooltipEl.appendChild(head);
-    ds.series.forEach(s => {
-      const v = s.values[nearest];
-      if (v == null) return;
-      const row = document.createElement("div");
-      row.className = "row";
-      const k = document.createElement("span");
-      k.className = "k";
-      k.style.background = s.color;
-      const name = document.createElement("span");
-      name.textContent = s.label;
-      const val = document.createElement("span");
-      val.className = "v";
-      val.textContent = v.toFixed(1);
-      row.appendChild(k); row.appendChild(name); row.appendChild(val);
-      tooltipEl.appendChild(row);
-    });
-    tooltipEl.style.opacity = 1;
-    tooltipEl.style.transform = "translate(" + (evt.clientX + 14) + "px," + (evt.clientY - 12) + "px)";
-  });
-  hit.addEventListener("pointerleave", () => {
-    crosshair.style.opacity = 0;
-    tooltipEl.style.opacity = 0;
-    tooltipEl.style.transform = "translate(-9999px,-9999px)";
-  });
-  svg.appendChild(hit);
-
-  return svg;
-}
 </script>
 </body>
 </html>
