@@ -311,12 +311,12 @@
       <span id="readoutLabel">READOUT</span>
       <span class="meta" id="readoutMeta">waiting for first call</span>
     </div>
-    <pre id="out">Enter the Pico's IP address and press Enter or click CONNECT. The default is 192.168.4.31.</pre>
+    <pre id="out">Enter the Pico's IP address and press Enter or click CONNECT. The default is 192.168.8.177.</pre>
   </div>
 
   <div class="connect">
     <label for="ip">DEVICE&nbsp;IP</label>
-    <input id="ip" value="192.168.4.31" placeholder="192.168.4.31" spellcheck="false"
+    <input id="ip" value="192.168.8.177" placeholder="192.168.8.177" spellcheck="false"
            onkeydown="if(event.key==='Enter') callApi('/api/current','Current data')">
     <button class="btn" id="connectBtn" onclick="callApi('/api/current','Current data')">CONNECT</button>
     <div class="status" id="status"><span class="dot"></span><span id="statusText">NOT CONNECTED</span></div>
@@ -385,7 +385,7 @@ const rMeta   = document.getElementById("readoutMeta");
 const ipInput = document.getElementById("ip");
 
 const LAST_IP_KEY = "cropmind_lastIp";
-const DEFAULT_IP = "192.168.4.31";
+const DEFAULT_IP = "192.168.8.177";
 
 window.addEventListener("DOMContentLoaded", () => {
   const last = localStorage.getItem(LAST_IP_KEY);
@@ -441,7 +441,7 @@ async function callApi(path, label) {
       "Connection failed: " + e.message + "\n\n" +
       "Try these checks:\n" +
       "  - Make sure the Pico and this device are on the same WiFi network.\n" +
-      "  - Verify the IP address is correct, or try the default: 192.168.4.31.\n" +
+      "  - Verify the IP address is correct, or try the default: 192.168.8.177.\n" +
       "  - If you are viewing this page over HTTPS, open it locally or use a hosted version.\n" +
       "  - If the Pico is just starting up, wait a few seconds and try again.";
     rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
