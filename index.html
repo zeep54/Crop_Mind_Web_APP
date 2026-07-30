@@ -127,6 +127,7 @@
   @media (max-width: 620px) { .calls { grid-template-columns: 1fr; } }
 
   .call {
+    position: relative;
     text-align: left;
     border: 1px solid var(--line);
     border-radius: 10px;
@@ -137,6 +138,7 @@
     transition: border-color .15s, transform .05s;
   }
   .call:hover { border-color: var(--navy); }
+  .call:hover .click-tag { background: var(--sky); color: #fff; }
   .call:active { transform: translateY(1px); }
   .call:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
   .call .endpoint {
@@ -154,6 +156,17 @@
     border: 1px solid var(--line);
     border-radius: 5px;
     padding: 3px 7px;
+  }
+  .call .click-tag {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+    color: var(--navy-deep);
+    background: rgba(127, 166, 217, 0.18);
+    border: 1px solid var(--sky);
+    border-radius: 20px;
+    padding: 3px 9px;
+    transition: background-color .15s, color .15s;
   }
 
   /* ── Controls ───────────────────────────────────────────────────── */
@@ -230,6 +243,16 @@
     color: var(--ink-soft); margin-bottom: 10px;
   }
   .readout-head .meta { margin-left: auto; letter-spacing: 0.04em; }
+  .back-btn {
+    display: none;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border: 1px solid var(--line); border-radius: 6px;
+    background: var(--ghost); color: var(--navy-deep);
+    cursor: pointer;
+  }
+  .back-btn:hover { border-color: var(--navy); }
+  .back-btn.show { display: inline-flex; align-items: center; }
   pre {
     font-family: var(--mono); font-size: 13px; line-height: 1.55;
     background: var(--navy-deep); color: #DDE6F2;
@@ -309,6 +332,7 @@
   <div class="readout">
     <div class="readout-head">
       <span id="readoutLabel">READOUT</span>
+      <button type="button" class="back-btn" id="backBtn" onclick="resetReadout()">&larr; BACK</button>
       <span class="meta" id="readoutMeta">waiting for first call</span>
     </div>
     <pre id="out">Enter the Pico's IP address and press Enter or click CONNECT. The default is 192.168.8.177.</pre>
@@ -324,16 +348,19 @@
 
   <div class="calls">
     <button class="call" onclick="callApi('/api/current','Current data')">
+      <span class="click-tag">CLICK ME</span>
       <span class="endpoint">GET /api/current</span>
       <h2>Call for current data</h2>
       <p>Latest readings held in the Pico's memory — environment sensors and all six soil moisture probes.</p>
     </button>
     <button class="call" onclick="callApi('/api/history','SD card history')">
+      <span class="click-tag">CLICK ME</span>
       <span class="endpoint">GET /api/history</span>
       <h2>Call for all SD card data</h2>
       <p>Every row logged to the SD card, streamed from the greenhouse as JSON. Large logs may take a moment.</p>
     </button>
     <button class="call" onclick="callLatest()">
+      <span class="click-tag">CLICK ME</span>
       <span class="endpoint">GET LATEST (from GitHub)</span>
       <h2>View last pushed reading</h2>
       <p>Read straight from this site — works from anywhere, no IP or shared WiFi needed. The Pico pushes a reading here periodically, so this can lag the live device by a few minutes.</p>
@@ -383,9 +410,25 @@ const stText  = document.getElementById("statusText");
 const rLabel  = document.getElementById("readoutLabel");
 const rMeta   = document.getElementById("readoutMeta");
 const ipInput = document.getElementById("ip");
+const backBtn = document.getElementById("backBtn");
 
 const LAST_IP_KEY = "cropmind_lastIp";
 const DEFAULT_IP = "192.168.8.177";
+
+// Captured before any call runs, so the back button can restore the
+// readout panel to exactly what it looked like on page load.
+const INITIAL_OUT   = out.textContent;
+const INITIAL_LABEL = rLabel.textContent;
+const INITIAL_META  = rMeta.textContent;
+
+function resetReadout() {
+  out.className = "";
+  out.textContent = INITIAL_OUT;
+  rLabel.textContent = INITIAL_LABEL;
+  rMeta.textContent = INITIAL_META;
+  setStatus("", "NOT CONNECTED");
+  backBtn.classList.remove("show");
+}
 
 window.addEventListener("DOMContentLoaded", () => {
   const last = localStorage.getItem(LAST_IP_KEY);
@@ -415,6 +458,7 @@ async function callApi(path, label) {
   out.className = "";
   out.textContent = "…";
   setStatus("", "REQUESTING");
+  backBtn.classList.add("show");
   const t0 = performance.now();
 
   try {
@@ -461,6 +505,7 @@ async function callLatest() {
   out.className = "";
   out.textContent = "…";
   setStatus("", "REQUESTING");
+  backBtn.classList.add("show");
   const t0 = performance.now();
 
   try {
