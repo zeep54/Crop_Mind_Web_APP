@@ -142,8 +142,10 @@
   .call:active { transform: translateY(1px); }
   .call:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
   .call .endpoint {
+    display: block;
     font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
     color: var(--sky); font-weight: 600;
+    padding-right: 90px;
   }
   .call h2 { font-size: 17px; font-weight: 600; margin: 6px 0 4px; color: var(--ink); }
   .call p  { font-size: 13.5px; color: var(--ink-soft); line-height: 1.45; }
@@ -487,7 +489,8 @@ async function callApi(path, label) {
       "  - Make sure the Pico and this device are on the same WiFi network.\n" +
       "  - Verify the IP address is correct, or try the default: 192.168.8.177.\n" +
       "  - If you are viewing this page over HTTPS, open it locally or use a hosted version.\n" +
-      "  - If the Pico is just starting up, wait a few seconds and try again.";
+      "  - If the Pico is just starting up, wait a few seconds and try again.\n\n" +
+      "Still stuck? Please email Zee Pearson at zpearson@ltu.edu so I can help troubleshoot it.";
     rMeta.textContent = "failed · " + new Date().toLocaleTimeString();
     setStatus("err", "NO RESPONSE");
   }
